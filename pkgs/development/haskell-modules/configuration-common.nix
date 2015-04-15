@@ -88,6 +88,10 @@ self: super: {
   # The test suite refers to its own library with an invalid version constraint.
   presburger = dontCheck super.presburger;
 
+  #no gcc in the test environment of nix, while shake wants it
+  shake = dontCheck super.shake;
+
+
   # Won't find it's header files without help.
   sfml-audio = appendConfigureFlag super.sfml-audio "--extra-include-dirs=${pkgs.openal}/include/AL";
 
