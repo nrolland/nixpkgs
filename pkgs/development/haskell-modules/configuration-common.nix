@@ -89,7 +89,7 @@ self: super: {
   presburger = dontCheck super.presburger;
 
   #no gcc in the test environment of nix, while shake wants it
-  shake = dontCheck super.shake;
+  shake = if pkgs.stdenv.isDarwin then dontCheck super.shake else super.shake;
 
 
   # Won't find it's header files without help.
