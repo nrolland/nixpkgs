@@ -1,34 +1,38 @@
-{ stdenv, fetchFromGitHub, fetchpatch, git, mono, v8, icu }:
+{ stdenv, fetchFromGitHub, fetchpatch, git, mono, v8, icu, subversion, python, which, cacert}:
 
 # There are some similarities with the pinta derivation. We should
 # have a helper to make it easy to package these Mono apps.
 
 stdenv.mkDerivation rec {
   name = "EventStore-${version}";
-  version = "3.0.3";
+  version = "3.5.1";
   src = fetchFromGitHub {
-    owner  = "EventStore";
-    repo   = "EventStore";
+    owner  = "nrolland";
+    repo   = "EventStore-1";
     rev    = "oss-v${version}";
-    sha256 = "1xz1dpnbkqqd3ph9g3z5cghr8zp14sr9y31lrdjrdydr3gm4sll2";
+    sha256 = "0kcvaz8ghmmv9adfv59kkj3aniqf092dr006s8kfq9wj9bgn9z2k";
   };
-
+  
   patches = [
     # see: https://github.com/EventStore/EventStore/issues/461
-    (fetchpatch {
-      url = https://github.com/EventStore/EventStore/commit/9a0987f19935178df143a3cf876becaa1b11ffae.patch;
-      sha256 = "04qw0rb1pypa8dqvj94j2mwkc1y6b40zrpkn1d3zfci3k8cam79y";
-    })
+    #(fetchpatch {
+    #  url = https://github.com/EventStore/EventStore/commit/9a0987f19935178df143a3cf876becaa1b11ffae.patch;
+    #  sha256 = "04qw0rb1pypa8dqvj94j2mwkc1y6b40zrpkn1d3zfci3k8cam79y";
+    #})
   ];
 
+
+  #for ssl snafu, cf explanation in https://github.com/NixOS/nixpkgs/issues/8247
   buildPhase = ''
     ln -s ${v8}/lib/libv8.so src/libs/libv8.so
     ln -s ${icu}/lib/libicui18n.so src/libs/libicui18n.so
     ln -s ${icu}/lib/libicuuc.so src/libs/libicuuc.so
 
-    patchShebangs build.sh
-    ./build.sh js1
-    ./build.sh quick ${version}
+    export SSL_CERT_FILE=${cacert}/etc/ssl/certs/ca-bundle.crt 
+    patchShebangs ./scripts/build-js1/build-js1-linux.sh
+
+    ./scripts/build-js1/build-js1-linux.sh werror=no
+    ./build.sh ${version}
   '';
 
   installPhase = ''
@@ -41,7 +45,7 @@ stdenv.mkDerivation rec {
     chmod +x $out/bin/clusternode
   '';
 
-  buildInputs = [ git v8 mono ];
+  buildInputs = [ git v8 mono subversion python which cacert ];
 
   dontStrip = true;
 
